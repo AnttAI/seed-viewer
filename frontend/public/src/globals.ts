@@ -1,5 +1,5 @@
 import {Animation} from "./animation.ts";
-import {Model3D, Model3DG1} from "./models.ts";
+import {Model3D, Model3DG1, Model3DT2} from "./models.ts";
 
 // Import model files so Vite bundles them
 // @ts-ignore
@@ -7,7 +7,7 @@ import G1ModelUrl from "/models3D/g1/g1_Zup_robot_01.fbx";
 // @ts-ignore
 import SomaModelUrl from "/models3D/SOMA/soma_male_skel_minimal.fbx";
 
-export type ModelType = 'soma' | 'g1';
+export type ModelType = 'soma' | 'g1' | 't2';
 
 export interface ModelConfig {
     name: string;
@@ -35,6 +35,14 @@ export const MODEL_CONFIGS: Record<ModelType, ModelConfig> = {
         rotation: [-Math.PI / 2, 0, 0],
         animFormat: 'csv',
         animEndpoint: '/storage_local/g1csv/'
+    },
+    t2: {
+        name: 'T2',
+        url: '/models3D/t2/T2_serial_nero_arms.urdf',
+        scale: 0.9589869491995866,
+        rotation: [-Math.PI / 2, 0, 0],
+        animFormat: 'csv',
+        animEndpoint: '/storage_local/t2csv/'
     }
 };
 
@@ -50,7 +58,7 @@ interface Globals {
     ANIMATION: Animation,
     FRAME: number,
     PLAYING: boolean,
-    MODEL3D: Model3D | Model3DG1,
+    MODEL3D: Model3D | Model3DG1 | Model3DT2,
     HEMISPHERE_LIGHT: any,
     DIRECTIONAL_LIGHT: any,
     FILL_LIGHT: any,
@@ -95,6 +103,3 @@ export const g: Globals = window.g = {
     CURRENT_MODEL: "soma" as ModelType
 
 } 
-
-
-

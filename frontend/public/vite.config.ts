@@ -7,7 +7,7 @@ import ConditionalCompile from "vite-plugin-conditional-compiler";
 
 export default defineConfig({
   plugins: [ConditionalCompile()],
-  assetsInclude: ['**/*.fbx', '**/*.usd', '**/*.usda', '**/*.usdc', '**/*.usdz', '**/*.csv', '**/*.hdr'],
+  assetsInclude: ['**/*.fbx', '**/*.urdf', '**/*.stl', '**/*.usd', '**/*.usda', '**/*.usdc', '**/*.usdz', '**/*.csv', '**/*.hdr'],
   publicDir: false, // Disable default public dir behavior since we're in public already
   // plugins: [wasm(), topLevelAwait()],
   build: {
@@ -39,4 +39,3 @@ export default defineConfig({
   },
   
 });
-

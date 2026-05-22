@@ -1,6 +1,7 @@
 import { g } from './globals.ts';
 
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import * as THREE from 'three';
 // @ts-ignore
 import { SkeletonHelper2, JointHelper } from './customSkeletonHelper.js';
@@ -16,6 +17,9 @@ export async function init3DModel(modelUrl:string, scale = 1, rotation: [number,
     if (g.CURRENT_MODEL === 'g1') {
         g.MODEL3D = new Model3DG1();
         await (g.MODEL3D as Model3DG1).init(modelUrl, scale, rotation);
+    } else if (g.CURRENT_MODEL === 't2') {
+        g.MODEL3D = new Model3DT2();
+        await (g.MODEL3D as Model3DT2).init(modelUrl, scale, rotation);
     } else {
         g.MODEL3D = new Model3D();
         await g.MODEL3D.init(modelUrl, scale, rotation);
@@ -332,6 +336,250 @@ applySomaMaterials() {
 
 }
 
+
+type RobotJointInfo = {
+    object: THREE.Object3D;
+    type: string;
+    axis: THREE.Vector3;
+    restPosition: THREE.Vector3;
+    restQuaternion: THREE.Quaternion;
+};
+
+function parseVector(value: string | null, fallback: [number, number, number] = [0, 0, 0]): THREE.Vector3 {
+    const parts = (value || '').trim().split(/\s+/).filter(Boolean).map(Number);
+    return new THREE.Vector3(
+        Number.isFinite(parts[0]) ? parts[0] : fallback[0],
+        Number.isFinite(parts[1]) ? parts[1] : fallback[1],
+        Number.isFinite(parts[2]) ? parts[2] : fallback[2],
+    );
+}
+
+function applyOrigin(object: THREE.Object3D, origin: Element | null) {
+    if (!origin) return;
+    object.position.copy(parseVector(origin.getAttribute('xyz')));
+    const rpy = parseVector(origin.getAttribute('rpy'));
+    object.quaternion.copy(urdfRpyToQuaternion(rpy.x, rpy.y, rpy.z));
+}
+
+function urdfRpyToQuaternion(roll: number, pitch: number, yaw: number): THREE.Quaternion {
+    const qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), roll);
+    const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), pitch);
+    const qz = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), yaw);
+    return qz.multiply(qy).multiply(qx);
+}
+
+/**
+ * Model3DT2 - T2 robot loaded from URDF/STL assets.
+ * The URDF hierarchy supplies real joint axes, then CSV joint columns drive it.
+ */
+export class Model3DT2 {
+    object!: THREE.Object3D;
+    joints: Map<string, THREE.Object3D> = new Map();
+    jointInfo: Map<string, RobotJointInfo> = new Map();
+    skeletonHelper: any = null;
+    anim!: G1Animation;
+
+    async init(modelUrl: string, scale: number, rotation: [number, number, number]) {
+        console.log('Loading T2 URDF model from:', modelUrl);
+        const text = await fetch(modelUrl).then((res) => {
+            if (!res.ok) throw new Error(`Failed to load T2 URDF: ${res.status}`);
+            return res.text();
+        });
+
+        const doc = new DOMParser().parseFromString(text, 'application/xml');
+        if (doc.querySelector('parsererror')) throw new Error('Failed to parse T2 URDF');
+
+        const baseUrl = new URL(modelUrl, window.location.href);
+        const rootGroup = new THREE.Group();
+        rootGroup.name = 'T2';
+        rootGroup.scale.set(scale, scale, scale);
+        rootGroup.rotation.set(rotation[0], rotation[1], rotation[2], 'YXZ');
+
+        const floatingBase = new THREE.Group();
+        floatingBase.name = 'floating_base_joint';
+        rootGroup.add(floatingBase);
+        this.joints.set(floatingBase.name, floatingBase);
+        this.jointInfo.set(floatingBase.name, {
+            object: floatingBase,
+            type: 'floating',
+            axis: new THREE.Vector3(0, 0, 1),
+            restPosition: floatingBase.position.clone(),
+            restQuaternion: floatingBase.quaternion.clone(),
+        });
+
+        const materialColors = this.parseMaterialColors(doc);
+        const links = await this.createLinks(doc, baseUrl, materialColors);
+        const childLinks = new Set<string>();
+
+        for (const jointEl of Array.from(doc.querySelectorAll('joint'))) {
+            const name = jointEl.getAttribute('name') || '';
+            const type = jointEl.getAttribute('type') || 'fixed';
+            const parentName = jointEl.querySelector('parent')?.getAttribute('link');
+            const childName = jointEl.querySelector('child')?.getAttribute('link');
+            if (!name || !parentName || !childName) continue;
+
+            const parentLink = links.get(parentName);
+            const childLink = links.get(childName);
+            if (!parentLink || !childLink) continue;
+
+            const jointObject = new THREE.Group();
+            jointObject.name = name;
+            applyOrigin(jointObject, jointEl.querySelector('origin'));
+            parentLink.add(jointObject);
+            jointObject.add(childLink);
+            childLinks.add(childName);
+
+            const axis = parseVector(jointEl.querySelector('axis')?.getAttribute('xyz'), [0, 0, 1]).normalize();
+            this.joints.set(name, jointObject);
+            this.jointInfo.set(name, {
+                object: jointObject,
+                type,
+                axis,
+                restPosition: jointObject.position.clone(),
+                restQuaternion: jointObject.quaternion.clone(),
+            });
+        }
+
+        const rootLink = Array.from(links.entries()).find(([name]) => !childLinks.has(name))?.[1] || links.get('pelvis');
+        if (rootLink) floatingBase.add(rootLink);
+
+        this.object = rootGroup;
+        this.applyT2Materials();
+
+        const helper = new JointHelper(Array.from(this.joints.values()));
+        this.skeletonHelper = helper;
+        this.skeletonHelper.visible = false;
+        g.SCENE.add(this.skeletonHelper);
+
+        console.log('[T2 URDF] Model loaded. Found joints:', Array.from(this.joints.keys()));
+    }
+
+    private parseMaterialColors(doc: Document): Map<string, THREE.Color> {
+        const colors = new Map<string, THREE.Color>();
+        for (const mat of Array.from(doc.documentElement.children).filter(el => el.tagName === 'material')) {
+            const name = mat.getAttribute('name');
+            const rgba = mat.querySelector('color')?.getAttribute('rgba');
+            if (!name || !rgba) continue;
+            const values = rgba.trim().split(/\s+/).map(Number);
+            colors.set(name, new THREE.Color(values[0] ?? 0.7, values[1] ?? 0.7, values[2] ?? 0.7));
+        }
+        return colors;
+    }
+
+    private async createLinks(doc: Document, baseUrl: URL, materialColors: Map<string, THREE.Color>): Promise<Map<string, THREE.Object3D>> {
+        const links = new Map<string, THREE.Object3D>();
+        const loader = new STLLoader();
+
+        for (const linkEl of Array.from(doc.querySelectorAll('link'))) {
+            const linkName = linkEl.getAttribute('name');
+            if (!linkName) continue;
+
+            const linkObject = new THREE.Group();
+            linkObject.name = linkName;
+            links.set(linkName, linkObject);
+
+            for (const visualEl of Array.from(linkEl.children).filter(el => el.tagName === 'visual')) {
+                const filename = visualEl.querySelector('mesh')?.getAttribute('filename');
+                if (!filename) continue;
+
+                const visualObject = new THREE.Group();
+                visualObject.name = `${linkName}_visual`;
+                applyOrigin(visualObject, visualEl.querySelector('origin'));
+
+                const geometry = await loader.loadAsync(new URL(filename, baseUrl).toString());
+                geometry.computeVertexNormals();
+
+                const matName = visualEl.querySelector('material')?.getAttribute('name') || '';
+                const color = materialColors.get(matName) || new THREE.Color(0.7, 0.7, 0.72);
+                const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+                    color,
+                    metalness: 0.35,
+                    roughness: 0.32,
+                    envMapIntensity: 1.2,
+                    fog: false,
+                }));
+                mesh.name = `${linkName}_mesh`;
+                mesh.frustumCulled = false;
+                mesh.castShadow = true;
+                mesh.receiveShadow = false;
+
+                visualObject.add(mesh);
+                linkObject.add(visualObject);
+            }
+        }
+
+        return links;
+    }
+
+    private applyT2Materials() {
+        const DARK_PARTS = ['head', 'ankle_roll', 'hip_pitch', 'gripper', 'base_link'];
+        this.object.traverse((child: any) => {
+            if (!child.isMesh) return;
+            const name = (child.name || '').toLowerCase();
+            const isDark = DARK_PARTS.some(part => name.includes(part));
+            child.material.color = isDark ? new THREE.Color(0.08, 0.08, 0.09) : new THREE.Color(0.76, 0.76, 0.78);
+            child.material.metalness = isDark ? 0.7 : 0.35;
+            child.material.roughness = isDark ? 0.24 : 0.32;
+            child.material.envMapIntensity = 1.2;
+        });
+    }
+
+    getRootWorldPosition(): THREE.Vector3 {
+        const v = new THREE.Vector3();
+        const root = this.joints.get('floating_base_joint') || this.object;
+        root.getWorldPosition(v);
+        return (isNaN(v.x) || isNaN(v.y) || isNaN(v.z)) ? new THREE.Vector3(0, 0, 0) : v;
+    }
+
+    setFrame(frame: number) {
+        if (!this.anim || typeof this.anim.getFrameData !== 'function') return;
+        const frameData = this.anim.getFrameData(frame);
+        if (!frameData) return;
+
+        const root = this.joints.get('floating_base_joint');
+        if (root) {
+            const posScale = 0.01;
+            root.position.set(
+                (frameData.root_translateX ?? 0) * posScale,
+                (frameData.root_translateY ?? 0) * posScale,
+                (frameData.root_translateZ ?? 0) * posScale
+            );
+            const rx = THREE.MathUtils.degToRad(frameData.root_rotateX ?? 0);
+            const ry = THREE.MathUtils.degToRad(frameData.root_rotateY ?? 0);
+            const rz = THREE.MathUtils.degToRad(frameData.root_rotateZ ?? 0);
+            root.quaternion.copy(urdfRpyToQuaternion(rx, ry, rz));
+        }
+
+        const dofQuat = new THREE.Quaternion();
+        for (const [jointName, info] of this.jointInfo) {
+            if (jointName === 'floating_base_joint' || info.type === 'fixed') continue;
+            const angle = frameData[`${jointName}_dof`];
+            if (angle === undefined) continue;
+
+            if (info.type === 'prismatic') {
+                const axis = info.axis.clone().applyQuaternion(info.restQuaternion);
+                info.object.position.copy(info.restPosition).addScaledVector(axis, THREE.MathUtils.degToRad(angle));
+            } else {
+                dofQuat.setFromAxisAngle(info.axis, THREE.MathUtils.degToRad(angle));
+                info.object.quaternion.copy(info.restQuaternion).multiply(dofQuat);
+            }
+        }
+    }
+
+    dispose() {
+        if (this.skeletonHelper) {
+            if (this.skeletonHelper.parent) this.skeletonHelper.parent.remove(this.skeletonHelper);
+            if (this.skeletonHelper.dispose) this.skeletonHelper.dispose();
+            this.skeletonHelper = null;
+        }
+        this.object.traverse((child: any) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) child.material.dispose();
+        });
+        this.joints.clear();
+        this.jointInfo.clear();
+    }
+}
 
 /**
  * Model3DG1 - G1 Robot model (FBX-based)
@@ -653,4 +901,3 @@ export class Model3DG1 {
         this.joints.clear();
     }
 }
-

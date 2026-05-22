@@ -50,7 +50,8 @@ api_app.include_router(metadata_router, prefix="/metadata")
 app.mount('/api', api_app)
 
 
-app.mount("/", StaticFiles(directory="dist", html=True, check_dir=True))
+if os.path.isdir("dist"):
+    app.mount("/", StaticFiles(directory="dist", html=True, check_dir=True))
 
 
 

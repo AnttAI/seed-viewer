@@ -9,7 +9,7 @@ import { fetchTemporalLabels } from "../temporal_labels.ts";
 /**
  * Request animation data based on current model type.
  * For SOMA: fetches BVH from /storage_local/somabvh/
- * For G1: fetches CSV from /storage_local/g1csv/
+ * For CSV robots: fetches CSV from the model's configured endpoint.
  */
 export async function requestBVH({ random = false, val="" }) {
 
@@ -31,13 +31,14 @@ export async function requestBVH({ random = false, val="" }) {
         
         // Branch based on animation format (determined by model type)
         if (currentModelConfig.animFormat === 'csv') {
-            // G1 model uses CSV animations
+            // Robot models use CSV animations
             if (lg.BROWSER_TYPE === "localFiles") {
+                const endpoint = currentModelConfig.animEndpoint;
                 url = random ?
-                    `${g.BACKEND_URL}/storage_local/g1csv/?random=true`
-                    : `${g.BACKEND_URL}/storage_local/g1csv/?csvpath=${val}`
+                    `${g.BACKEND_URL}${endpoint}?random=true`
+                    : `${g.BACKEND_URL}${endpoint}?csvpath=${val}`
             } else {
-                alert("G1 CSV animations only supported in localFiles mode")
+                alert(`${currentModelConfig.name} CSV animations only supported in localFiles mode`)
                 return
             }
 
@@ -82,7 +83,6 @@ export async function requestBVH({ random = false, val="" }) {
         g.SPINNER.hide();
     }
 }
-
 
 
 

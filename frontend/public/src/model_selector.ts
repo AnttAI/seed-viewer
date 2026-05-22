@@ -7,10 +7,12 @@ import { requestBVH } from "./browser/__requestBVH.ts";
 
 import somaIconUrl from "../images/soma_icon.png";
 import g1IconUrl from "../images/g1_icon.png";
+import t2IconUrl from "../images/t2_icon.png";
 
 const ICON_URLS: Record<string, string> = {
     soma: somaIconUrl,
     g1: g1IconUrl,
+    t2: t2IconUrl,
 };
 
 export function initModelSelector() {

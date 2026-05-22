@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite public",
-    "build": "vite build public && cp -r public/images public/dist/"
+    "build": "vite build public && cp -r public/images public/models3D public/dist/"
   },
   "devDependencies": {
     "@eslint/js": "^9.3.0",

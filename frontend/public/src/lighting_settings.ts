@@ -132,6 +132,7 @@ const G1_DEFAULTS: LightingSettings = {
 export const LIGHTING_DEFAULTS: Record<ModelType, LightingSettings> = {
     soma: { ...SOMA_DEFAULTS },
     g1: { ...G1_DEFAULTS },
+    t2: { ...G1_DEFAULTS },
 };
 
 function storageKey(modelType: ModelType): string {
