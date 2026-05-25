@@ -21,6 +21,7 @@ import {initProjectionToggle} from "./projection_toggle.ts";
 import {initSettingsPanel} from "./settings_panel.ts";
 import {initTemporalLabels} from "./temporal_labels.ts";
 import {initTheme} from "./theme.ts";
+import {initT2RobotControls} from "./t2_robot_controls.ts";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -52,6 +53,7 @@ import {initTheme} from "./theme.ts";
         initViewCube();
         initProjectionToggle();
         initSettingsPanel();
+        initT2RobotControls();
 
         initMetadataViewer();
         await init3DModel(urlModel3D, scale, rotation);

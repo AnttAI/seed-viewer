@@ -21,35 +21,48 @@ FILES_DIR = MOTIONS_DIR / "files"
 BVH_SUBDIR = os.environ.get("BVH_SUBDIR", "").strip("/")
 CSV_SUBDIR = os.environ.get("CSV_SUBDIR", "").strip("/")
 T2_CSV_SUBDIR = os.environ.get("T2_CSV_SUBDIR", "").strip("/")
+BVH_SUBDIRS = os.environ.get("BVH_SUBDIRS", BVH_SUBDIR)
+CSV_SUBDIRS = os.environ.get("CSV_SUBDIRS", CSV_SUBDIR)
+T2_CSV_SUBDIRS = os.environ.get("T2_CSV_SUBDIRS", T2_CSV_SUBDIR)
 
-def scan_root(base_dir: Path, subdir: str) -> Path:
-    return base_dir / subdir if subdir else base_dir
+def parse_subdirs(value: str) -> list[str]:
+    return [part.strip().strip("/") for part in value.split(",") if part.strip().strip("/")]
+
+def scan_roots(base_dir: Path, subdirs: str) -> list[Path]:
+    parsed = parse_subdirs(subdirs)
+    return [base_dir / subdir for subdir in parsed] if parsed else [base_dir]
+
+def describe_scan_roots(base_dir: Path, subdirs: str) -> str:
+    return ", ".join(str(path) for path in scan_roots(base_dir, subdirs))
 
 def collect_bvh_files():
     """Collect all BVH files, returning {stem: relative_path_from_bvh_dir}."""
     result = {}
-    for path in scan_root(BVH_DIR, BVH_SUBDIR).rglob("*.bvh"):
-        rel = path.relative_to(BVH_DIR)
-        stem = path.stem
-        result[stem] = str(rel)
+    for root in scan_roots(BVH_DIR, BVH_SUBDIRS):
+        for path in root.rglob("*.bvh"):
+            rel = path.relative_to(BVH_DIR)
+            stem = path.stem
+            result[stem] = str(rel)
     return result
 
 def collect_csv_files():
     """Collect all CSV files, returning {stem: relative_path_from_csv_dir}."""
     result = {}
-    for path in scan_root(CSV_DIR, CSV_SUBDIR).rglob("*.csv"):
-        rel = path.relative_to(CSV_DIR)
-        stem = path.stem
-        result[stem] = str(rel)
+    for root in scan_roots(CSV_DIR, CSV_SUBDIRS):
+        for path in root.rglob("*.csv"):
+            rel = path.relative_to(CSV_DIR)
+            stem = path.stem
+            result[stem] = str(rel)
     return result
 
 def collect_t2_csv_files():
     """Collect all T2 CSV files, returning {stem: relative_path_from_t2_csv_dir}."""
     result = {}
-    for path in scan_root(T2_CSV_DIR, T2_CSV_SUBDIR).rglob("*.csv"):
-        rel = path.relative_to(T2_CSV_DIR)
-        stem = path.stem
-        result[stem] = str(rel)
+    for root in scan_roots(T2_CSV_DIR, T2_CSV_SUBDIRS):
+        for path in root.rglob("*.csv"):
+            rel = path.relative_to(T2_CSV_DIR)
+            stem = path.stem
+            result[stem] = str(rel)
     return result
 
 def make_move_name(stem: str) -> str:
@@ -62,15 +75,15 @@ def make_move_name(stem: str) -> str:
     return name.strip().title()
 
 def main():
-    print(f"Scanning BVH files in: {scan_root(BVH_DIR, BVH_SUBDIR)}")
+    print(f"Scanning BVH files in: {describe_scan_roots(BVH_DIR, BVH_SUBDIRS)}")
     bvh_files = collect_bvh_files()
     print(f"  Found {len(bvh_files)} BVH files")
 
-    print(f"Scanning CSV files in: {scan_root(CSV_DIR, CSV_SUBDIR)}")
+    print(f"Scanning CSV files in: {describe_scan_roots(CSV_DIR, CSV_SUBDIRS)}")
     csv_files = collect_csv_files()
     print(f"  Found {len(csv_files)} CSV files")
 
-    print(f"Scanning T2 CSV files in: {scan_root(T2_CSV_DIR, T2_CSV_SUBDIR)}")
+    print(f"Scanning T2 CSV files in: {describe_scan_roots(T2_CSV_DIR, T2_CSV_SUBDIRS)}")
     t2_csv_files = collect_t2_csv_files()
     print(f"  Found {len(t2_csv_files)} T2 CSV files")
 

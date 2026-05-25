@@ -92,6 +92,119 @@
   box-shadow: 0 1px 3px var(--theme-shadow-light);
 }
 
+#t2-robot-controls {
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 220px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--theme-panel-border);
+  background: color-mix(in srgb, var(--theme-panel-bg) 86%, transparent);
+  box-shadow: 0 1px 3px var(--theme-shadow-light);
+  backdrop-filter: blur(8px);
+}
+
+.t2-robot-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.t2-robot-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 170px;
+  color: var(--theme-text-muted);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.t2-robot-status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.t2-robot-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #a3a3a3;
+}
+
+.t2-robot-dot.connected {
+  background: #16a34a;
+}
+
+.t2-robot-dot.playing {
+  background: #2563eb;
+}
+
+.t2-robot-button {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--theme-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.t2-robot-button:hover {
+  color: var(--theme-text-primary);
+  background: var(--theme-btn-bg-light);
+}
+
+.t2-robot-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.t2-robot-button .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.t2-robot-fps {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  color: var(--theme-text-muted);
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.t2-robot-fps-slider {
+  flex: 1 1 auto;
+  min-width: 100px;
+  height: 14px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.t2-robot-fps-input {
+  width: 42px;
+  height: 22px;
+  padding: 0 4px;
+  text-align: right;
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 6px;
+  color: var(--theme-text-primary);
+  background: var(--theme-panel-bg);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
 *:focus {
   outline: none;
 }

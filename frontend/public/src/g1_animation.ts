@@ -12,6 +12,7 @@ export class G1Animation {
     fps: number = 120; // Default FPS for G1 animations
     maxFrame: number;
     name: string;
+    csvContent: string;
     
     // Column names from CSV header
     private columns: string[] = [];
@@ -20,6 +21,7 @@ export class G1Animation {
 
     constructor(csvContent: string, name: string) {
         this.name = name;
+        this.csvContent = csvContent;
         this.parseCSV(csvContent);
         this.frameCount = this.frames.length;
         this.maxFrame = this.frameCount - 1;
