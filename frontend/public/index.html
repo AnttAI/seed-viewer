@@ -4,9 +4,9 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="./images/antt-ai_logo.png" type="image/x-icon">
   
-  <title>Viewer Bones</title>
+  <title>Viewer antt.ai</title>
 
   <link href="./index.css" rel="stylesheet">
 
@@ -58,8 +58,9 @@
 
     <!-- Left nav sidebar -->
     <div id="nav-sidebar" class="flex flex-col gap-1.5 pr-2 flex-none">
-      <img src="./images/TYPO_COLOR_WHITE_BG_01.jpg" alt="Logo" class="nav-btn" style="padding: 2px; object-fit: contain; cursor: default;">
+      <img src="./images/antt-ai_logo.png" alt="Logo" class="nav-btn" style="padding: 2px; object-fit: contain; cursor: default;">
       <button data-nav="seed" class="nav-btn nav-btn-active" title="SEED Viewer">SEED</button>
+      <button data-nav="generate-motion" class="nav-btn" title="Generate Motion by Prompt">GENMP</button>
       <button data-nav="rp1" class="nav-btn" title="RP1">RP1</button>
       <button data-nav="rp2" class="nav-btn" title="RP2">RP2</button>
     </div>
@@ -135,12 +136,19 @@
       var modalText = document.getElementById('nav-modal-text');
       var closeBtn = document.getElementById('nav-modal-close');
 
-      document.querySelectorAll('.nav-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var nav = btn.getAttribute('data-nav');
-          if (nav === 'seed') return; // current page, do nothing
+	      document.querySelectorAll('.nav-btn').forEach(function(btn) {
+	        btn.addEventListener('click', function() {
+	          var nav = btn.getAttribute('data-nav');
+	          if (nav === 'seed') {
+              if (window.showSeedBrowser) window.showSeedBrowser();
+              return;
+            }
+            if (nav === 'generate-motion') {
+              if (window.showGeneratedMotionPrompt) window.showGeneratedMotionPrompt();
+              return;
+            }
 
-          var label = nav.toUpperCase();
+	          var label = nav.toUpperCase();
           modalText.innerHTML = 'Here goes an image presenting <strong>' + label +
             '</strong> with a <a href="#" class="text-blue-500 underline">link to website</a>.';
           modal.classList.remove('hidden');

@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from storage_local.main import router as storage_local_router
 from metadata.main import router as metadata_router
 from robot_t2 import router as robot_t2_router
+from kimodo_generated import router as kimodo_generated_router
 
 from globals import Global
 
@@ -49,6 +50,7 @@ api_app = FastAPI(**openapi, debug=True)
 api_app.include_router(storage_local_router, prefix="/storage_local")
 api_app.include_router(metadata_router, prefix="/metadata")
 api_app.include_router(robot_t2_router, prefix="/robot/t2")
+api_app.include_router(kimodo_generated_router, prefix="/kimodo/generated")
 app.mount('/api', api_app)
 
 

@@ -92,6 +92,15 @@
   box-shadow: 0 1px 3px var(--theme-shadow-light);
 }
 
+.nav-btn-wide {
+  width: 92px;
+  min-height: 44px;
+  height: auto;
+  padding: 6px 4px;
+  line-height: 1.15;
+  text-align: center;
+}
+
 #t2-robot-controls {
   display: none;
   flex-direction: column;
