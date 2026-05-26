@@ -23,6 +23,7 @@ import {initTemporalLabels} from "./temporal_labels.ts";
 import {initTheme} from "./theme.ts";
 import {initT2RobotControls} from "./t2_robot_controls.ts";
 import {initGeneratedMotionPrompt} from "./generated_motion_prompt.ts";
+import {initTaskMotion} from "./task_motion.ts";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -56,6 +57,7 @@ import {initGeneratedMotionPrompt} from "./generated_motion_prompt.ts";
         initSettingsPanel();
         initT2RobotControls();
         initGeneratedMotionPrompt();
+        initTaskMotion();
 
         initMetadataViewer();
         await init3DModel(urlModel3D, scale, rotation);

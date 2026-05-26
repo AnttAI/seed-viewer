@@ -60,7 +60,8 @@
     <div id="nav-sidebar" class="flex flex-col gap-1.5 pr-2 flex-none">
       <img src="./images/antt-ai_logo.png" alt="Logo" class="nav-btn" style="padding: 2px; object-fit: contain; cursor: default;">
       <button data-nav="seed" class="nav-btn nav-btn-active" title="SEED Viewer">SEED</button>
-      <button data-nav="generate-motion" class="nav-btn" title="Generate Motion by Prompt">GENMP</button>
+      <button data-nav="generate-motion" class="nav-btn" title="Generate Motion by Prompt">KIMODO</button>
+      <button data-nav="task" class="nav-btn" title="Task Prompt Sequence">TASK</button>
       <button data-nav="rp1" class="nav-btn" title="RP1">RP1</button>
       <button data-nav="rp2" class="nav-btn" title="RP2">RP2</button>
     </div>
@@ -145,6 +146,10 @@
             }
             if (nav === 'generate-motion') {
               if (window.showGeneratedMotionPrompt) window.showGeneratedMotionPrompt();
+              return;
+            }
+            if (nav === 'task') {
+              if (window.showTaskMotion) window.showTaskMotion();
               return;
             }
 

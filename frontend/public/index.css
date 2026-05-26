@@ -101,6 +101,55 @@
   text-align: center;
 }
 
+.task-prompt-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-prompt-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.task-icon-button,
+.task-mini-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-text-muted);
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.task-icon-button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--theme-panel-border);
+  background: var(--theme-panel-bg);
+}
+
+.task-mini-button {
+  width: 22px;
+  height: 22px;
+}
+
+.task-icon-button:hover,
+.task-mini-button:hover {
+  color: var(--theme-text-primary);
+  background: var(--theme-btn-bg-light);
+}
+
+.task-icon-button .material-symbols-outlined,
+.task-mini-button .material-symbols-outlined {
+  font-size: 18px;
+}
+
 #t2-robot-controls {
   display: none;
   flex-direction: column;
